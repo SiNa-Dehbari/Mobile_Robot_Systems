@@ -3,6 +3,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
+#include "mobile_robot_systems/msg/next_order.hpp"
 #include <chrono>
 
 using namespace std::chrono_literals;

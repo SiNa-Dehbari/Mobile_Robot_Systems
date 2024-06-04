@@ -9,9 +9,22 @@ find_package(std_msgs REQUIRED)
 # Include directories
 include_directories(inc)
 
+# Generate messages
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/NextOrder.msg")
+
+# Add include directory
+include_directories(
+  ${CMAKE_CURRENT_BINARY_DIR}/rosidl_generator_cpp
+)
+
 # Add executable
 add_executable(OrderOptimizer src/order_optimizer.cpp src/main.cpp)
-ament_target_dependencies(OrderOptimizer rclcpp std_msgs)
+ament_target_dependencies(
+OrderOptimizer
+rclcpp
+std_msgs
+)
 
 # Install executable
 install(TARGETS
