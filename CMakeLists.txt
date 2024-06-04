@@ -5,6 +5,7 @@ project(mobile_robot_systems)
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
 # Include directories
 include_directories(inc)
@@ -20,10 +21,10 @@ include_directories(
 
 # Add executable
 add_executable(OrderOptimizer src/order_optimizer.cpp src/main.cpp)
-ament_target_dependencies(
-OrderOptimizer
+ament_target_dependencies(OrderOptimizer
 rclcpp
 std_msgs
+geometry_msgs
 )
 
 # Install executable

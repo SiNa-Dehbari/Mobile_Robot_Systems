@@ -3,6 +3,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
+#include "geometry_msgs/msg/pose_stamped.hpp"
 #include "mobile_robot_systems/msg/next_order.hpp"
 #include <chrono>
 
@@ -15,9 +16,13 @@ public:
 private:
     void DummyPublisher();
 
+    void PoseSubscriber(const geometry_msgs::msg::PoseStamped::SharedPtr msg);
+
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_;
     rclcpp::TimerBase::SharedPtr timer_;
     size_t count_;
+
+    rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr pose_subscription_;
 };
 
 #endif  // ORDER_OPTIMIZER_PUBLISHER__ORDER_OPTIMIZER_PUBLISHER_H_
