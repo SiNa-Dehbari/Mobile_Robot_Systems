@@ -6,18 +6,16 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
+find_package(builtin_interfaces REQUIRED)
 
 # Include directories
-include_directories(inc)
+include_directories(include)
 
 # Generate messages
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/NextOrder.msg")
 
-# Add include directory
-include_directories(
-  ${CMAKE_CURRENT_BINARY_DIR}/rosidl_generator_cpp
-)
 
 # Add executable
 add_executable(OrderOptimizer src/order_optimizer.cpp src/main.cpp)
@@ -26,6 +24,12 @@ rclcpp
 std_msgs
 geometry_msgs
 )
+
+# Link against the generated message types
+rosidl_target_interfaces(OrderOptimizer
+${PROJECT_NAME} "rosidl_typesupport_cpp")
+
+target_link_libraries(OrderOptimizer ${cpp_typesupport_target})
 
 # Install executable
 install(TARGETS

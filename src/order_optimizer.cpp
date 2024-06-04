@@ -8,6 +8,9 @@ OrderOptimizer::OrderOptimizer() : Node("OrderOptimizer"), count_(0)
 
     pose_subscription_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
     "currentPosition", 10, std::bind(&OrderOptimizer::PoseSubscriber, this, std::placeholders::_1));
+
+    subscription_ = this->create_subscription<mobile_robot_systems::msg::NextOrder>(
+      "nextOrder", 10, std::bind(&OrderOptimizer::NextOrderSubscriber, this, std::placeholders::_1));
 }
 
 //TODO CleanUp at the end
@@ -25,3 +28,7 @@ void OrderOptimizer::PoseSubscriber(const geometry_msgs::msg::PoseStamped::Share
                 msg->pose.position.x, msg->pose.position.y, msg->pose.position.z);
   }
 
+void OrderOptimizer::NextOrderSubscriber(const mobile_robot_systems::msg::NextOrder::SharedPtr msg)
+{
+    RCLCPP_INFO(this->get_logger(), "Received order_id: %d, description: %s", msg->order_id, msg->description.c_str());
+}

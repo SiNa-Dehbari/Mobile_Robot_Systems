@@ -14,6 +14,7 @@ public:
     OrderOptimizer();
 
 private:
+
     void DummyPublisher();
 
     void PoseSubscriber(const geometry_msgs::msg::PoseStamped::SharedPtr msg);
@@ -23,6 +24,9 @@ private:
     size_t count_;
 
     rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr pose_subscription_;
+
+    rclcpp::Subscription<mobile_robot_systems::msg::NextOrder>::SharedPtr subscription_;
+    void NextOrderSubscriber(const mobile_robot_systems::msg::NextOrder::SharedPtr msg);
 };
 
 #endif  // ORDER_OPTIMIZER_PUBLISHER__ORDER_OPTIMIZER_PUBLISHER_H_
