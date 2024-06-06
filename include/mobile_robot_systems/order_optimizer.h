@@ -63,6 +63,31 @@ private:
     std::unordered_map<uint32_t, OrderData> orders_;
     std::mutex orders_mutex_;
 
+    /*
+    parsing config file
+    */
+    void ConfigFileParser(const std::string &directory_path);
+    /*
+    structure of configuration file
+    */
+    struct Part
+        {
+            std::string name;
+            double cx;
+            double cy;
+        };
+    /*
+    structure of each product
+    */
+    struct Product
+        {
+            std::string name;
+            std::vector<Part> parts;
+        };
+
+    std::unordered_map<uint32_t, Product> products_;
+    std::mutex products_mutex_;
+    //std::vector<std::thread> threads_;
 
 };
 

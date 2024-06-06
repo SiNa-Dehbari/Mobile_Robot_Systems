@@ -1,6 +1,6 @@
 #include "mobile_robot_systems/order_optimizer.h"
 
-OrderOptimizer::OrderOptimizer() : Node("OrderOptimizer"), count_(0)
+OrderOptimizer::OrderOptimizer() : Node("OrderOptimizer")
 {
     // File path arguments
     this->declare_parameter<std::string>("directory_path", "");
@@ -18,6 +18,8 @@ OrderOptimizer::OrderOptimizer() : Node("OrderOptimizer"), count_(0)
     logDirectoryPath();
 
     OrderFilesReader(directory_path_);
+
+    ConfigFileParser(directory_path_);
 
     //
     pose_subscription_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
@@ -69,6 +71,36 @@ void OrderOptimizer::OrderFilesParser(const std::string &order_file_path)
     catch (const YAML::Exception &e)
     {
       RCLCPP_ERROR(this->get_logger(), "Failed to parse YAML file: %s. Error: %s", order_file_path.c_str(), e.what());
+    }
+}
+
+void OrderOptimizer::ConfigFileParser(const std::string &directory_path)
+{
+  std::filesystem::path config_path = std::filesystem::path(directory_path) / "configuration/products.yaml";
+  try
+    {
+      YAML::Node config_file = YAML::LoadFile(config_path);
+      RCLCPP_INFO(this->get_logger(), "Parsed configuration file: %s", config_path.c_str());
+
+      for (const auto& entry : config_file)
+      {
+        Product product;
+        product.name = entry["product"].as<std::string>();
+        for (const auto& part : entry["parts"])
+        {
+          Part part_data;
+          part_data.name = part["part"].as<std::string>();
+          part_data.cx = part["cx"].as<double>();
+          part_data.cy = part["cy"].as<double>();
+          product.parts.push_back(part_data);
+        }
+        std::lock_guard<std::mutex> lock(products_mutex_);
+        products_[entry["id"].as<uint32_t>()] = product;
+      }
+    }
+    catch (const YAML::Exception &e)
+    {
+      RCLCPP_ERROR(this->get_logger(), "Failed to parse configuration file: %s. Error: %s", config_path.c_str(), e.what());
     }
 }
 
