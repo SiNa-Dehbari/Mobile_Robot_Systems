@@ -22,25 +22,38 @@ public:
 
 private:
 
-    void DummyPublisher();
-    rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_;
-    rclcpp::TimerBase::SharedPtr timer_;
-    size_t count_;
-
+    /*
+    Directory of folder (arguments)
+    */
     void logDirectoryPath();
     std::string directory_path_;
 
+    /*
+    Subscriber position of the robot
+    */
     void PoseSubscriber(const geometry_msgs::msg::PoseStamped::SharedPtr msg);
     rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr pose_subscription_;
 
+    /*
+    Subscriber: Next order
+    */
     void NextOrderSubscriber(const mobile_robot_systems::msg::NextOrder::SharedPtr msg);
     rclcpp::Subscription<mobile_robot_systems::msg::NextOrder>::SharedPtr subscription_;
 
+    /*
+    listing  order files in the directory (one thread per each file)
+    */
     void OrderFilesReader(const std::string directory_path);
 
+    /*
+    Parsing order files
+    */
     void OrderFilesParser(const std::string &order_file_path);
     std::vector<std::thread> threads_;
 
+    /*
+    structure of Order files
+    */
     struct OrderData
         {
             double cx;
@@ -49,6 +62,8 @@ private:
         };
     std::unordered_map<uint32_t, OrderData> orders_;
     std::mutex orders_mutex_;
+
+
 };
 
 #endif  // ORDER_OPTIMIZER_PUBLISHER__ORDER_OPTIMIZER_PUBLISHER_H_
