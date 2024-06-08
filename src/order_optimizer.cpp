@@ -17,7 +17,6 @@ OrderOptimizer::OrderOptimizer() : Node("OrderOptimizer")
     }
     logDirectoryPath();
 
-    OrderFilesReader(directory_path_);
 
     ConfigFileParser(directory_path_);
 
@@ -49,13 +48,13 @@ void OrderOptimizer::OrderFilesReader(const std::string directory_path_){
 
 void OrderOptimizer::OrderFilesParser(const std::string &order_file_path)
 {
-  RCLCPP_INFO(this->get_logger(), "Parsed file: %s", order_file_path.c_str());
+  //RCLCPP_INFO(this->get_logger(), "Parsed file: %s", order_file_path.c_str());
 
   // Process the YAML file and store the orders
   try
     {
       YAML::Node yaml_file = YAML::LoadFile(order_file_path);
-      RCLCPP_INFO(this->get_logger(), "Parsed Order file: %s", order_file_path.c_str());
+      //RCLCPP_INFO(this->get_logger(), "Parsed Order file: %s", order_file_path.c_str());
       // Process the YAML file and store the orders
       for (const auto& entry : yaml_file)
       {
@@ -94,7 +93,6 @@ void OrderOptimizer::ConfigFileParser(const std::string &directory_path)
           part_data.cy = part["cy"].as<double>();
           product.parts.push_back(part_data);
         }
-        std::lock_guard<std::mutex> lock(products_mutex_);
         products_[entry["id"].as<uint32_t>()] = product;
       }
     }
@@ -112,5 +110,34 @@ void OrderOptimizer::PoseSubscriber(const geometry_msgs::msg::PoseStamped::Share
 
 void OrderOptimizer::NextOrderSubscriber(const mobile_robot_systems::msg::NextOrder::SharedPtr msg)
 {
-    RCLCPP_INFO(this->get_logger(), "Received order_id: %d, description: %s", msg->order_id, msg->description.c_str());
+    //RCLCPP_INFO(this->get_logger(), "Received order_id: %d, description: %s", msg->order_id, msg->description.c_str());
+    OrderFilesReader(directory_path_);
+    //std::lock_guard<std::mutex> lock(orders_mutex_);
+    std::lock_guard<std::mutex> lock(products_mutex_);
+
+    /*
+    for (const auto &order_pair : orders_) {
+        RCLCPP_INFO(this->get_logger(), "Order ID: %u", order_pair.first);
+    }
+    */
+
+
+    auto orders = orders_.find(msg->order_id);
+    if (orders != orders_.end())
+    {
+      const OrderData &order_data = orders ->second;
+      RCLCPP_WARN(this->get_logger(), "Order ID: %u  found", msg->order_id);
+      for (const auto &products : order_data.products)
+      {
+
+          RCLCPP_INFO(this->get_logger(), "Product ID: %u", products);
+          auto product = products_.find(products);
+          const Product &product_data = product ->second;
+          RCLCPP_INFO(this->get_logger(), "Parts for Product no. %u:", products);
+          for (const auto &part : product_data.parts)
+          {
+              RCLCPP_INFO(this->get_logger(), "Part : %s, cx: %f, cy: %f", part.name.c_str(), part.cx, part.cy);
+          }
+      }
+    }
 }
