@@ -110,34 +110,99 @@ void OrderOptimizer::PoseSubscriber(const geometry_msgs::msg::PoseStamped::Share
 
 void OrderOptimizer::NextOrderSubscriber(const mobile_robot_systems::msg::NextOrder::SharedPtr msg)
 {
-    //RCLCPP_INFO(this->get_logger(), "Received order_id: %d, description: %s", msg->order_id, msg->description.c_str());
-    OrderFilesReader(directory_path_);
-    //std::lock_guard<std::mutex> lock(orders_mutex_);
-    std::lock_guard<std::mutex> lock(products_mutex_);
+  uint32_t order_id = msg->order_id;
 
-    /*
-    for (const auto &order_pair : orders_) {
-        RCLCPP_INFO(this->get_logger(), "Order ID: %u", order_pair.first);
-    }
-    */
+  OrderFilesReader(directory_path_);
+  //std::lock_guard<std::mutex> lock(orders_mutex_);
+  std::lock_guard<std::mutex> lock(products_mutex_);
+
+  /*
+  for (const auto &order_pair : orders_) {
+      RCLCPP_INFO(this->get_logger(), "Order ID: %u", order_pair.first);
+  }
+  */
 
 
-    auto orders = orders_.find(msg->order_id);
-    if (orders != orders_.end())
+  auto orders = orders_.find(order_id);
+  if (orders != orders_.end())
+  {
+    const OrderData &order_data = orders ->second;
+    //RCLCPP_WARN(this->get_logger(), "Order ID: %u  found", order_id);
+
+    OrderContainer order_container;
+    order_container.order_id = order_id;
+
+    for (const auto &products : order_data.products)
     {
-      const OrderData &order_data = orders ->second;
-      RCLCPP_WARN(this->get_logger(), "Order ID: %u  found", msg->order_id);
-      for (const auto &products : order_data.products)
-      {
+        //RCLCPP_INFO(this->get_logger(), "Product ID: %u", products);
+        auto product = products_.find(products);
+        const Product &product_data = product ->second;
 
-          RCLCPP_INFO(this->get_logger(), "Product ID: %u", products);
-          auto product = products_.find(products);
-          const Product &product_data = product ->second;
-          RCLCPP_INFO(this->get_logger(), "Parts for Product no. %u:", products);
-          for (const auto &part : product_data.parts)
-          {
-              RCLCPP_INFO(this->get_logger(), "Part : %s, cx: %f, cy: %f", part.name.c_str(), part.cx, part.cy);
-          }
-      }
+        order_container.products.push_back(product_data);
+    RouteOptimizer(order_container);
     }
+  }     else {
+        RCLCPP_WARN(this->get_logger(), "Order ID %u not found.", order_id);
+    }
+}
+
+void OrderOptimizer::RouteOptimizer(const OrderContainer &order_container)
+{
+  RCLCPP_INFO(this->get_logger(), "Working on order: %u", order_container.order_id);
+
+  const auto& order = orders_[order_container.order_id];
+  std::vector<std::pair<Part, std::string>> parts_to_fetch;
+  for (const auto &product : order_container.products) {
+      //RCLCPP_INFO(this->get_logger(), "Product: %s", product.name.c_str());
+      for (const auto &part : product.parts) {
+          parts_to_fetch.emplace_back(part, product.name);
+          //RCLCPP_INFO(this->get_logger(), "Part: %s, cx: %f, cy: %f", part.name.c_str(), part.cx, part.cy);
+      }
+  }
+      // Sort parts by proximity
+      std::vector<bool> picked(parts_to_fetch.size(), false);
+      double current_x = 0.0, current_y = 0.0;
+      size_t count = 0;
+
+      while (count < parts_to_fetch.size())
+      {
+        // Find the closest part
+        double min_distance = std::numeric_limits<double>::max();
+        size_t closest_index = 0;
+
+        for (size_t i = 0; i < parts_to_fetch.size(); ++i)
+        {
+          if (!picked[i])
+          {
+            // Finding the closest part
+            double distance = std::sqrt(std::pow(parts_to_fetch[i].first.cx - current_x, 2) + std::pow(parts_to_fetch[i].first.cy - current_y, 2));
+            if (distance < min_distance)
+            {
+              min_distance = distance;
+              closest_index = i;
+            }
+          }
+        }
+        // Pick all parts at the closest location
+        for (size_t i = 0; i < parts_to_fetch.size(); ++i)
+        {
+          if (!picked[i] &&
+            parts_to_fetch[i].first.cx == parts_to_fetch[closest_index].first.cx &&
+            parts_to_fetch[i].first.cy == parts_to_fetch[closest_index].first.cy)
+          {
+            RCLCPP_INFO(this->get_logger(), "%zu. Fetching part '%s' for product '%s' at x: %f, y: %f",
+            count + 1, parts_to_fetch[i].first.name.c_str(), parts_to_fetch[i].second.c_str(),
+            parts_to_fetch[i].first.cx, parts_to_fetch[i].first.cy);
+            picked[i] = true;
+            ++count;
+          }
+        }
+
+        // Update the current location to the location of the picked parts
+        current_x = parts_to_fetch[closest_index].first.cx;
+        current_y = parts_to_fetch[closest_index].first.cy;
+      }
+
+      RCLCPP_INFO(this->get_logger(), "%zu. Delivering to destination x: %f, y: %f",
+                  count + 1, order.cx, order.cy);
 }
