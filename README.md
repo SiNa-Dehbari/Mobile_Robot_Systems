@@ -21,13 +21,14 @@ ROS2 Humble (at least Desktop version - see [ROS2 wiki](https://docs.ros.org/en/
 
 
 ## Setup Dependencies:
-clone this repository and install the required dependencies.
 
-TODO
+* cpp-yaml
+
+    `sudo apt-get install libyaml-cpp-dev`
 
 ## How does it work?
 
-After installing the dependencies and cloning this package in to your workspace, run the code as below:
+After installing the dependencies and clone this package in to your workspace, run the code as below:
 
 ```
 ros2 run mobile_robot_systems OrderOptimizer --ros-args -p directory_path:=/path/to/the/directory
