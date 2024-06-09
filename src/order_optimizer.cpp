@@ -73,6 +73,7 @@ void OrderOptimizer::OrderFilesParser(const std::string &order_file_path)
     catch (const YAML::Exception &e)
     {
       RCLCPP_ERROR(this->get_logger(), "Failed to parse YAML file: %s. Error: %s", order_file_path.c_str(), e.what());
+      RCLCPP_ERROR(this->get_logger(), "Unknow YAML file Format");
     }
 }
 
@@ -116,6 +117,7 @@ void OrderOptimizer::NextOrderSubscriber(const mobile_robot_systems::msg::NextOr
 {
   uint32_t order_id = msg->order_id;
 
+  RCLCPP_INFO(this->get_logger(), "Working on order: %u , %s", order_id, msg->description.c_str());
   OrderFilesReader(directory_path_);
   //std::lock_guard<std::mutex> lock(orders_mutex_);
   std::lock_guard<std::mutex> lock(products_mutex_);
@@ -146,14 +148,12 @@ void OrderOptimizer::NextOrderSubscriber(const mobile_robot_systems::msg::NextOr
     RouteOptimizer(order_container);
     }
   }     else {
-        RCLCPP_WARN(this->get_logger(), "Order ID %u not found.", order_id);
+        RCLCPP_WARN(this->get_logger(), "unspecified Order ID %u .", order_id);
     }
 }
 
 void OrderOptimizer::RouteOptimizer(const OrderContainer &order_container)
 {
-  RCLCPP_INFO(this->get_logger(), "Working on order: %u", order_container.order_id);
-
   const auto& order = orders_[order_container.order_id];
   std::vector<std::pair<Part, std::string>> parts_to_fetch;
   for (const auto &product : order_container.products) {
@@ -215,7 +215,6 @@ void OrderOptimizer::RouteOptimizer(const OrderContainer &order_container)
 
 void OrderOptimizer::MarkerVisualizer(const double x, double y, std::string Type)
 {
-
     auto marker_array = visualization_msgs::msg::MarkerArray();
     static int id = 0;
 
