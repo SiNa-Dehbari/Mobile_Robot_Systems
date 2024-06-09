@@ -16,9 +16,6 @@
 #include <vector>
 #include <mutex>
 
-using namespace std::chrono_literals;
-
-
 /*
 structure of configuration file
 */
@@ -101,8 +98,8 @@ private:
     std::unordered_map<uint32_t, Product> products_;
     std::mutex orders_mutex_;
     std::mutex products_mutex_;
-    rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr pose_subscription_;
-    rclcpp::Subscription<mobile_robot_systems::msg::NextOrder>::SharedPtr subscription_;
+    rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr pose_subscriber_;
+    rclcpp::Subscription<mobile_robot_systems::msg::NextOrder>::SharedPtr order_subscriber_;
     rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr marker_array_publisher_;
 };
 

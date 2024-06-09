@@ -3,9 +3,9 @@
 <package format="3">
   <name>mobile_robot_systems</name>
   <version>0.0.1</version>
-  <description>optimizing orders</description>
+  <description>a package for optimizing orders to find the shortest path</description>
   <maintainer email="dehbari.sina@gmail.com">sina</maintainer>
-  <license>TODO: License declaration</license>
+  <license>"Proprietary"</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 

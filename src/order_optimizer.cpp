@@ -21,10 +21,10 @@ OrderOptimizer::OrderOptimizer() : Node("OrderOptimizer")
     ConfigFileParser(directory_path_);
 
     //
-    pose_subscription_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
+    pose_subscriber_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
     "currentPosition", 10, std::bind(&OrderOptimizer::PoseSubscriber, this, std::placeholders::_1));
 
-    subscription_ = this->create_subscription<mobile_robot_systems::msg::NextOrder>(
+    order_subscriber_ = this->create_subscription<mobile_robot_systems::msg::NextOrder>(
       "nextOrder", 10, std::bind(&OrderOptimizer::NextOrderSubscriber, this, std::placeholders::_1));
 
     marker_array_publisher_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("order_path", 10);
@@ -38,7 +38,7 @@ void OrderOptimizer::logDirectoryPath() {
 void OrderOptimizer::OrderFilesReader(const std::string directory_path_){
     std::filesystem::path  orders_path = std::filesystem::path(directory_path_) / "orders";
 
-    // Read all .yaml files in the orders directory
+    // Read all .yaml files in the order directory
     for (const auto &entry : std::filesystem::directory_iterator(orders_path))
     {
       if (entry.path().extension() == ".yaml")
@@ -58,7 +58,7 @@ void OrderOptimizer::OrderFilesParser(const std::string &order_file_path)
     {
       YAML::Node yaml_file = YAML::LoadFile(order_file_path);
       //RCLCPP_INFO(this->get_logger(), "Parsed Order file: %s", order_file_path.c_str());
-      // Process the YAML file and store the orders
+
       for (const auto& entry : yaml_file)
       {
         uint32_t order_id = entry["order"].as<uint32_t>();
@@ -119,21 +119,13 @@ void OrderOptimizer::NextOrderSubscriber(const mobile_robot_systems::msg::NextOr
 
   RCLCPP_INFO(this->get_logger(), "Working on order: %u , %s", order_id, msg->description.c_str());
   OrderFilesReader(directory_path_);
-  //std::lock_guard<std::mutex> lock(orders_mutex_);
+
   std::lock_guard<std::mutex> lock(products_mutex_);
-
-  /*
-  for (const auto &order_pair : orders_) {
-      RCLCPP_INFO(this->get_logger(), "Order ID: %u", order_pair.first);
-  }
-  */
-
 
   auto orders = orders_.find(order_id);
   if (orders != orders_.end())
   {
     const OrderData &order_data = orders ->second;
-    //RCLCPP_WARN(this->get_logger(), "Order ID: %u  found", order_id);
 
     OrderContainer order_container;
     order_container.order_id = order_id;
