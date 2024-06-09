@@ -5,10 +5,11 @@ project(mobile_robot_systems)
 find_package(ament_cmake REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(builtin_interfaces REQUIRED)
+find_package(yaml-cpp REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(yaml-cpp REQUIRED)
+find_package(visualization_msgs REQUIRED)
 
 # Include directories
 include_directories(include)
@@ -24,6 +25,7 @@ ament_target_dependencies(OrderOptimizer
 rclcpp
 std_msgs
 geometry_msgs
+visualization_msgs
 )
 
 # Link against the generated message types

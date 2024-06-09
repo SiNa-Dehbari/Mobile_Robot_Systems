@@ -26,6 +26,9 @@ OrderOptimizer::OrderOptimizer() : Node("OrderOptimizer")
 
     subscription_ = this->create_subscription<mobile_robot_systems::msg::NextOrder>(
       "nextOrder", 10, std::bind(&OrderOptimizer::NextOrderSubscriber, this, std::placeholders::_1));
+
+    marker_array_publisher_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("order_path", 10);
+
 }
 
 void OrderOptimizer::logDirectoryPath() {
@@ -106,6 +109,7 @@ void OrderOptimizer::PoseSubscriber(const geometry_msgs::msg::PoseStamped::Share
   {
     RCLCPP_INFO(this->get_logger(), "Received pose: x=%.2f, y=%.2f, z=%.2f",
                 msg->pose.position.x, msg->pose.position.y, msg->pose.position.z);
+    MarkerVisualizer(msg->pose.position.x, msg->pose.position.y, "Robot");
   }
 
 void OrderOptimizer::NextOrderSubscriber(const mobile_robot_systems::msg::NextOrder::SharedPtr msg)
@@ -189,10 +193,12 @@ void OrderOptimizer::RouteOptimizer(const OrderContainer &order_container)
           if (!picked[i] &&
             parts_to_fetch[i].first.cx == parts_to_fetch[closest_index].first.cx &&
             parts_to_fetch[i].first.cy == parts_to_fetch[closest_index].first.cy)
+
           {
-            RCLCPP_INFO(this->get_logger(), "%zu. Fetching part '%s' for product '%s' at x: %f, y: %f",
+            RCLCPP_INFO(this->get_logger(), "%zu. Fetching part '%s' for '%s' at x: %f, y: %f",
             count + 1, parts_to_fetch[i].first.name.c_str(), parts_to_fetch[i].second.c_str(),
             parts_to_fetch[i].first.cx, parts_to_fetch[i].first.cy);
+            MarkerVisualizer(parts_to_fetch[i].first.cx, parts_to_fetch[i].first.cy, "Part");
             picked[i] = true;
             ++count;
           }
@@ -205,4 +211,40 @@ void OrderOptimizer::RouteOptimizer(const OrderContainer &order_container)
 
       RCLCPP_INFO(this->get_logger(), "%zu. Delivering to destination x: %f, y: %f",
                   count + 1, order.cx, order.cy);
+}
+
+void OrderOptimizer::MarkerVisualizer(const double x, double y, std::string Type)
+{
+
+    auto marker_array = visualization_msgs::msg::MarkerArray();
+    static int id = 0;
+
+    // Create a CUBE marker for single (x, y) coordinate
+    visualization_msgs::msg::Marker cube_marker;
+    cube_marker.header.frame_id = "map";
+    cube_marker.header.stamp = this->now();
+    cube_marker.ns = "basic_shapes";
+    cube_marker.id = id++;
+    if (Type == "Part"){
+      cube_marker.type = visualization_msgs::msg::Marker::CYLINDER;
+    } else if (Type == "Robot"){
+      cube_marker.type = visualization_msgs::msg::Marker::CUBE;
+    }
+    cube_marker.action = visualization_msgs::msg::Marker::ADD;
+    cube_marker.pose.position.x = x;
+    cube_marker.pose.position.y = y;
+    cube_marker.pose.position.z = 0.0;
+    cube_marker.pose.orientation.x = 0.0;
+    cube_marker.pose.orientation.y = 0.0;
+    cube_marker.pose.orientation.z = 0.0;
+    cube_marker.pose.orientation.w = 1.0;
+    cube_marker.scale.x = 1.0;
+    cube_marker.scale.y = 1.0;
+    cube_marker.scale.z = 1.0;
+    cube_marker.color.r = 0.0f;
+    cube_marker.color.g = 1.0f;
+    cube_marker.color.b = 0.0f;
+    cube_marker.color.a = 1.0f;
+    marker_array.markers.push_back(cube_marker);
+    marker_array_publisher_->publish(marker_array);
 }
