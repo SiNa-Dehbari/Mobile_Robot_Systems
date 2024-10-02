@@ -26,7 +26,7 @@ ROS2 Humble (at least Desktop version - see [ROS2 wiki](https://docs.ros.org/en/
 
     `sudo apt-get install libyaml-cpp-dev`
 
-## How does it work?
+## How To Run
 
 After installing the dependencies and clone this package in to your workspace, run the code as below:
 
@@ -34,6 +34,16 @@ After installing the dependencies and clone this package in to your workspace, r
 ros2 run mobile_robot_systems OrderOptimizer --ros-args -p directory_path:=/path/to/the/directory
 ```
 Note: if the directory is not provided for the node, it gets the default directory (src/mobile_robot_systems/files)
+
+Note: if there is no publishing message you can publish the below two messages on Terminals:
+
+```
+ros2 topic pub  /currentPosition geometry_msgs/msg/PoseStamped "{header: {stamp: {sec: 1, nanosec: 123456789}}, pose: {position: {x: 1.0, y: 2.0, z: 3.0}, orientation: {w: 1.0}}}"
+
+
+ros2 topic pub /nextOrder mobile_robot_systems/msg/NextOrder "{order_id: 1100001, description: 'dummy message'}" --rate 1
+```
+
 
 ## Parameters
 
